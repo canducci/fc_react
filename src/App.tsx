@@ -1,25 +1,44 @@
-import React from 'react';
-import logo from './logo.svg';
-import './App.css';
+import React from "react";
+import { Link, Outlet, ReactLocation, Route, Router } from "react-location";
+import Admin from "./components/admin";
+import Home from "./components/home";
+import Login from "./components/login";
+import { useAuth } from "./lib/login";
+
+type CustomRoute = {
+  label: string;
+  admin?: boolean;
+} & Route;
+
+const routes: CustomRoute[] = [
+  {
+    path: "/",
+    element: <Home />,
+    label: "Home",
+  },
+  {
+    path: "/admin",
+    element: <Admin />,
+    label: "Admin",
+    admin:true
+  },
+];
+
+const location = new ReactLocation();
 
 function App() {
+  const auth = useAuth();
+
+  if (!auth.user) return <Login />;
+
   return (
-    <div className="App">
-      <header className="App-header">
-        <img src={logo} className="App-logo" alt="logo" />
-        <p>
-          Edit <code>src/App.tsx</code> and save to reload.
-        </p>
-        <a
-          className="App-link"
-          href="https://reactjs.org"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          Learn React
-        </a>
-      </header>
-    </div>
+      <Router routes={routes} location={location}>
+        {routes.filter(((route) => !route.admin || auth.user!.role === "admin" )).map((route) => (
+          <Link key={route.path} to={route.path}>{route.label}</Link>
+        ))}
+        <Link to="/" onClick={auth.logout}>Logout</Link>
+        <Outlet />
+      </Router>
   );
 }
 
